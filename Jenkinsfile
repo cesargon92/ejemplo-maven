@@ -1,38 +1,33 @@
+/* groovylint-disable LineLength */
 pipeline {
     agent any
 
     stages {
         stage('Compile') {
-            steps{
+            steps {
                 sh 'mvn clean compile -e'
             }
         }
         stage('Test') {
-            steps{
+            steps {
                 sh 'mvn clean test -e'
             }
         }
         stage('Package') {
-            steps{
+            steps {
                 sh 'mvn clean package -e'
             }
         }
         stage('SonarQube analysis') {
-		    steps{
-		    	withSonarQubeEnv(installationName: 'sonar') {
-			    	sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar'
-			    }
-		    }
-		}
-        stage('Run') {
-            steps{
-                sh 'mvn spring-boot:run &'
+            steps {
+                withSonarQubeEnv(installationName: 'sonar') {
+                    sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar'
+                }
             }
         }
-        stage('Curl') {
-            steps{
-                sh 'sleep 20'
-                sh 'curl -X GET "http://localhost:8888/rest/mscovid/test?msg=testing"'
+        stage('UploadNexus') {
+            steps {
+                nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: 'test-nexus', packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: 'jar', filePath: 'C:/Proyectos/ejemplo-maven/build/DevOpsUsach2020-0.0.1.jar']], mavenCoordinate: [artifactId: 'DevOpsUsach2020', groupId: 'com.devopsusach2020', packaging: 'jar', version: '0.0.1']]]
             }
         }
     }
